@@ -39,6 +39,9 @@ def fourier_transform(data):
 	new_data = np.fft.fft(data)
 	return new_data
 
+def fourier_transform2(data,nFeatures):
+	
+
 def plot_data(data):
 	plt.plot(data)
 	plt.show()
