@@ -95,8 +95,8 @@ def load_all_data2(path):
             #data_fhr.append(new_data_fhr)
             #plot_and_save(new_data_fhr, case_name)
             ft_data = fourier_transform(new_data_fhr)
-            tmp_real = smooth(ft_data.real,51)
-            tmp_imag = smooth(ft_data.imag,51)
+            tmp_real = smooth(ft_data.real,31)
+            tmp_imag = smooth(ft_data.imag,31)
             d_real = down_sample(tmp_real)[:50]
             d_imag = down_sample(tmp_imag)[:50]
             peaks_real, _ = find_peaks(abs(tmp_real),distance=10,prominence=0.005)
@@ -113,13 +113,13 @@ def load_all_data2(path):
                 #plot_and_save(ft_fhr[i_case,:], case_name)
                 num_fhr_case += 1
 
-    feature = np.stack(feature,axis=0)
+    #feature = np.stack(feature,axis=0)
     ft_fhr = np.stack(np.squeeze(ft_fhr,axis=0))
     #for x in feature:
     #    print(x.shape)
     #return data_fhr, ft_fhr
     return ft_fhr, feature
-
+'''
 def load_all_data(path):
     # load handpicked feature data from path
     # pre-fixed parameter
@@ -148,7 +148,7 @@ def load_all_data(path):
             #plot_and_save(ft_fhr[i_case,:], case_name)
             num_fhr_case += 1
     return data_fhr[:num_fhr_case,:], ft_fhr[:num_fhr_case,:]
-
+'''
 def smooth(data, window_size=5):
     return np.convolve(data,np.ones(window_size),'valid')/window_size
 
@@ -170,19 +170,20 @@ def optmize(train_X, train_Y):
     parameters = {
             #'max_depth': [10, 20],
             #'learning_rate': [0.05, 0.1],
-            'n_estimators': [100, 200],
+            #'n_estimators': [100, 200],
             #'max_delta_step': [0.2, 0.4]
-            'subsample': [0.7, 0.8, 0.9],
-            'colsample_bytree': [0.6, 0.7, 0.8],
-            'scale_pos_weight': [0.6, 0.8, 1]
+            #'subsample': [0.7, 0.8, 0.9],
+            #'colsample_bytree': [0.6, 0.7, 0.8]
+            #'min_child_weight': [0, 1],
+            #'scale_pos_weight': [0.6, 0.8],
+            'reg_alpha': [0, 0.125]
             }
     
     xlf = XGBClassifier(max_depth=10,
             learning_rate=0.05,
-            n_estimators=300,
+            n_estimators=200,
             silent=True,
             objective='binary:logistic',
-            nthread=-1,
             gamma=0,
             min_child_weight=1,
             max_delta_step=0.2,
@@ -196,7 +197,7 @@ def optmize(train_X, train_Y):
             missing=None,
             tree_method='gpu_hist')
         
-    gsearch = GridSearchCV(xlf, param_grid=parameters, scoring='accuracy', cv=10)
+    gsearch = GridSearchCV(xlf, param_grid=parameters, scoring='recall', cv=10)
     gsearch.fit(train_X, train_Y)
     print("Best score: %0.3f" % gsearch.best_score_)
     print("Best parameters set:")
@@ -210,13 +211,12 @@ abnormal_path = '/home/zhenyu/workspace/cacom/CACOM_2019/DataSet/Fallgruppe_60'
 ab_fhr, ab_fhr_ft = load_all_data2(abnormal_path)
 normal_path = '/home/zhenyu/workspace/cacom/CACOM_2019/DataSet/Kontrollgruppe_60'
 nor_fhr, nor_fhr_ft  = load_all_data2(normal_path)
-print(ab_fhr.shape)
-print(nor_fhr.shape)
+
 #all_data_fhr = np.concatenate((ab_fhr_ft, nor_fhr_ft), axis=0)
 all_data_fhr = np.concatenate((ab_fhr, nor_fhr), axis=0)
-all_label_fhr = np.concatenate((np.zeros((len(ab_fhr_ft),1)), np.ones((len(nor_fhr_ft),1))), axis=0).ravel()
-print(len(nor_fhr_ft))
-print(len(ab_fhr_ft))
+all_label_fhr = np.concatenate((np.ones((len(ab_fhr_ft),1)), np.zeros((len(nor_fhr_ft),1))), axis=0).ravel()
+#print(len(nor_fhr_ft))
+#print(len(ab_fhr_ft))
 x_train, x_test, y_train, y_test = train_test_split(all_data_fhr, all_label_fhr)
 print("optimizing...")
 model = optmize(x_train,y_train)
@@ -225,6 +225,6 @@ model.fit(x_train, y_train)
 model.save_model('model.xgb')
 print("model saved!")
 test(model,x_test,y_test)
-s = to_graphviz(model)
 tree_idx = 0
-s.render('tree_plot_'+str(tree_idx)+'.gv',view=True,num_trees=tree_idx)
+s = to_graphviz(model,num_trees=tree_idx)
+s.render('tree_plot_'+str(tree_idx)+'.gv',view=True)
