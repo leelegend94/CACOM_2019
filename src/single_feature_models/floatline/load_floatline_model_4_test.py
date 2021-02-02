@@ -48,7 +48,7 @@ def plot_data(data):
 """load the model"""
 floatline_model = xgb.Booster({'nthread':4}) # init model
 floatline_model.load_model('floatline_model') # load model data
-
+'''
 """load the data: TODO!!!!!!!!!!"""
 # should return a data set called data!!
 # please take load_all_data function in floatline.py as a reference to load the new test data!!
@@ -65,5 +65,10 @@ re = recall_score(label.values, label_pred.round())
 print(f"Accuracy:\n {100* acc:.2f}%")
 print(f"Precision:\n {100* prec:.2f}%")
 print(f"Recall:\n {100* re:.2f}%")
+'''
+#for param_name in sorted(floatline_model.get_params().keys()):
+#    print("\t%s: %r" % (param_name, best_parameters[param_name]))
+s = xgb.to_graphviz(floatline_model)
+s.render("tree_plot.gv",view=True)
 #print("confusion matrix:")
 #print(cm)

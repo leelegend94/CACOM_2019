@@ -88,7 +88,7 @@ def load_all_data2(path):
     for i_case, case_name in enumerate(case_list_copy):
         raw_data = xr.open_dataset(path + '/' + case_name).to_array(dim='feature').transpose().to_pandas()
 
-        raw_data_fhr = raw_data['corrected'].tolist()[-num_point:]  #there is no need to interpolate the data, since the corrected data is availiable, downsample is not necessary as well, because we will apply fourier transform
+        raw_data_fhr = raw_data['floatline'].tolist()[-num_point:]  #there is no need to interpolate the data, since the corrected data is availiable, downsample is not necessary as well, because we will apply fourier transform
 
         new_data_fhr = raw_data_fhr
         if len(new_data_fhr) == num_point:
@@ -176,7 +176,7 @@ def optmize(train_X, train_Y):
             #'colsample_bytree': [0.6, 0.7, 0.8]
             #'min_child_weight': [0, 1],
             #'scale_pos_weight': [0.6, 0.8],
-            'reg_alpha': [0, 0.125]
+            #'reg_alpha': [0, 0.125]
             }
     
     xlf = XGBClassifier(max_depth=10,
@@ -194,8 +194,7 @@ def optmize(train_X, train_Y):
             reg_lambda=1,
             scale_pos_weight=1,
             seed=1440,
-            missing=None,
-            tree_method='gpu_hist')
+            missing=None)
         
     gsearch = GridSearchCV(xlf, param_grid=parameters, scoring='recall', cv=10)
     gsearch.fit(train_X, train_Y)
@@ -207,9 +206,9 @@ def optmize(train_X, train_Y):
     return gsearch.best_estimator_
 
 print("loading and pre-processing")
-abnormal_path = '/home/zhenyu/workspace/cacom/CACOM_2019/DataSet/Fallgruppe_60'
+abnormal_path = '/Users/zhenyuli/Local_Workspace/cacom/CACOM_2019/DataSet/Fallgruppe_60'
 ab_fhr, ab_fhr_ft = load_all_data2(abnormal_path)
-normal_path = '/home/zhenyu/workspace/cacom/CACOM_2019/DataSet/Kontrollgruppe_60'
+normal_path = '/Users/zhenyuli/Local_Workspace/cacom/CACOM_2019/DataSet/Kontrollgruppe_60'
 nor_fhr, nor_fhr_ft  = load_all_data2(normal_path)
 
 #all_data_fhr = np.concatenate((ab_fhr_ft, nor_fhr_ft), axis=0)
@@ -226,5 +225,5 @@ model.save_model('model.xgb')
 print("model saved!")
 test(model,x_test,y_test)
 tree_idx = 0
-s = to_graphviz(model,num_trees=tree_idx)
-s.render('tree_plot_'+str(tree_idx)+'.gv',view=True)
+#s = to_graphviz(model,num_trees=tree_idx)
+#s.render('tree_plot_'+str(tree_idx)+'.gv',view=True)
